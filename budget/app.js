@@ -5,7 +5,7 @@ var budgetController = (function() {
         this.description = description;
         this.value = value;
         this.percentage = -1;
-    }
+    };
 
     Expense.prototype.calcPercentage = function(totalIncome) {
         if (totalIncome > 0) {
@@ -13,17 +13,26 @@ var budgetController = (function() {
         } else {
             this.percentage = -1;
         }
-    }
+    };
 
     Expense.prototype.getPercentage = function() {
         return this.percentage;
-    }
+    };
 
     var Income = function(id, description, value) {
         this.id = id;
         this.description = description;
         this.value = value;
-    }
+    };
+
+    var calculateTotal = function(type) {
+        // 计算总和
+        var sum = 0;
+        data.allItems[type].forEach(function(cur) {
+            sum += cur.value;
+        });
+        data.totals[type] = sum
+    };
 
     var data = {
         allItems: {
@@ -64,7 +73,33 @@ var budgetController = (function() {
             // Return the new element
             return newItem
             
-        }
+        },
+
+        calculateBudget: function() {
+
+            // calculate total income and expenses
+            calculateTotal("exp");
+            calculateTotal("inc");
+
+            // calculate the budget: income - expenses
+            data.budget = data.totals.inc - data.totals.exp;
+
+            // calculate the percentage of income that we spent
+            if (data.totals.inc > 0) {
+                data.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            } else {
+                data.percentage = -1;
+            }
+        },
+
+        getBudget: function() {
+            return {
+                budget: data.budget,
+                totalInc: data.totals.inc,
+                totalExp: data.totals.exp,
+                percentage: data.percentage
+            };
+        },
     }
 })();
 
@@ -118,6 +153,7 @@ var UIController = (function() {
         getDOMstrings: function() {
             return DOMstrings;
         },
+
         getInput: function() {
             return {
                 type: document.querySelector(DOMstrings.inputType).value,
@@ -125,6 +161,7 @@ var UIController = (function() {
                 value: parseFloat(document.querySelector(DOMstrings.inputValue).value)
             }
         },
+
         addListItem: function(obj, type) {
             var html, newHtml, element;
 
@@ -160,7 +197,22 @@ var UIController = (function() {
             });
 
             fieldsArr[0].focus;
-        }
+        },
+
+        displayBudget: function(obj) {
+            var type;
+            obj.budget > 0 ? type = "inc" : type = "exp";
+            // 使用textContent特性表示text内容
+            document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+            document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, "inc");
+            document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, "exp");
+
+            if (obj.percentage > 0) {
+                document.querySelector(DOMstrings.percentageLabel).textContent = obj.percentage + "%";
+            } else {
+                document.querySelector(DOMstrings.percentageLabel).textContent = "---";
+            }
+        },
     }
 
 })();
@@ -172,6 +224,17 @@ var controller = (function(budgetCtrl, UICtrl) {
 
         document.querySelector(DOM.inputBtn).addEventListener("click", ctrlAddItem);
 
+    }
+
+    var updateBudget = function() {
+        // 1. Calculate the budget
+        budgetCtrl.calculateBudget();
+
+        // 2. Return the budget
+        var budget = budgetCtrl.getBudget();
+
+        // 3. Display the budget on the UI
+        UICtrl.displayBudget(budget);
     }
 
     var ctrlAddItem = function() {
@@ -189,6 +252,9 @@ var controller = (function(budgetCtrl, UICtrl) {
 
             // 4. Clear the fields
             UICtrl.clearFields();
+
+            // 5. Calculate and update budget
+            updateBudget();
         }
     }
 
