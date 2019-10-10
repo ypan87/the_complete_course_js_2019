@@ -398,6 +398,12 @@ var controller = (function(budgetCtrl, UICtrl) {
         init: function() {
             console.log("Application has started.");
             UICtrl.displayMonth();
+            UICtrl.displayBudget({
+                budget: 0,
+                totalInc: 0,
+                totalExp: 0,
+                percentage: -1
+            });
             setupEventListeners();
         }
     }
