@@ -271,6 +271,22 @@ var UIController = (function() {
             });
 
         },
+
+        changedType: function() {
+
+            var fields = document.querySelectorAll(
+                DOMstrings.inputType + "," +
+                DOMstrings.inputDescription + "," +
+                DOMstrings.inputValue
+            );
+            
+            // css red-focus中我们需要使用!important来强调这一个类优先
+            nodeListForEach(fields, function(cur) {
+                cur.classList.toggle('red-focus');
+            });
+
+            document.querySelector(DOMstrings.inputBtn).classList.toggle("red");
+        }
     }
 
 })();
@@ -289,6 +305,8 @@ var controller = (function(budgetCtrl, UICtrl) {
         });
 
         document.querySelector(DOM.container).addEventListener("click", ctrlDeleteItem);
+
+        document.querySelector(DOM.inputType).addEventListener("change", UICtrl.changedType);
     };
 
     var updateBudget = function() {
